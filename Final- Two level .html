@@ -1,0 +1,356 @@
+<!doctype html>
+<html>
+<head>
+<title>866 Project Interface1</title>
+<meta charset="UTF-8">
+<style>
+  #mmap {
+    height: 65%;
+    width: 70%;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+</style>
+<script type="text/javascript" src="files/jszip.js"></script>
+<script type="text/javascript" src="files/FileSaver.js"></script>
+<script type="text/javascript" src="files/myexcel.js"></script>
+<script src="excel_main.js"></script>
+<script>
+  var tasks=["","","","","",""];
+  tasks[0]="Question 1: In Australia, there is a national park in the <b>Northern Territory</b> called <b>'Fish River George Block National Park'</b>. Mr. Bean is planning" +
+  " to go there in summer break. Which highway is the <b>closet</b> to the park? Mention the highway ID in the answer below. Search for the Park over the <b>whole area of Northern Territory</b>"+
+  " marked by dashed lines and Mention the <b>closest highway ID</b> in the answer below. Example- 16";
+  tasks[1]="Question 2: Tony Stark is desperate to visit London's <b>parks</b> those have <b>rivers flowing through them</b>. He was told to search among the <b>4 markers-'A','B','C' & 'D'</b>" +
+  " marked by his friend Thor on google maps. Thor ensured that there must be <b>one park</b> that satisifes his interest. Mention the best fitted <b>marker ID</b> below."+
+  " Example- A";
+  tasks[2]="Question 3: Hitler is travelling from <b>Chicago to LA</b> using google maps for the first time. He is curious to know how many <b>distinct highways</b>"+
+  " he will be on. The highway IDs are marked on them in little <b>blue-red or white markers</b>. Count the no. of <b>distinct highway IDs</b> that are on the google map's"+
+  " <b>suggested path</b> and mention the number in the answer form below. Example- 3. Hint- If any ID comes multiple times, count them as 1.";
+  tasks[3]="Question 4: Charlie Puth is in a <b>bar called 'Latitude'</b> at Sydney. Suddenly he wishes to go to another bar <b>closer</b>. He got a few results in google maps."+
+  "  The priority is- the new bar should be <b>closer to a bus stop and also closer to the previous bar</b>. Which bar among the results do you suggest?" +
+  "  <b>click</b> on the markers to get the <b>names</b> and mention one in the answer form below. Example- Magellan. Hint- Search 'Latitude' first.";
+  tasks[4]="Question 5: Peter Parker is now at <b>Victoria Park</b> planning to reach <b>Hyde park</b> in a single ride without changing transport."+
+  " In his google map, the transit lines are shown in colors, <b>each color is a single transport line, goes both ways</b>. There are <b>2 different"+
+  " transport lines- Bus and Metro</b>. The line with a <b>circular symbol</b> is a <b>bus</b> line and line with an <b>arbitrary shaped symbol</b>"+
+  " is a <b>Metro</b>. Look for a colored line that passes being <b>the closet to both source and destination</b>. Mention the <b>type of transport, start"+
+  " and stop station names</b> in the answer form respectively in <b>comma seperated format</b>. The station names can be seen written beside the"+
+  " symbols when the map is fully zoomed. Example- Metro, Aldgate East, Tottenham Court Road.";
+  tasks[5]="Question 6: Forrest Gump and Jenny just got married last week. In their honeymoon at Paris, Jenny wants to visit a museum. There are 3 museums"+
+  " those seemed good- <b>Musée Grévin(MG), Musée de la Vie romantique(MDR) and Musée Jacquemart-André(MJA)</b>. They want to go to the one that is <b>surrounded by the least traffic</b>."+
+  " From the traffic map, <b>serial them</b> according to the <b>traffic density around them</b>. in a traffic map, <b>GREEN</b> means"+
+  " <b>no traffic</b>, <b>RED</b> means <b>HIGH traffic</b> and <b>dark RED</b> means <b>very HIGH traffic</b>. Write their shortnames in serial from"+
+  " <b>the least to the most traffic</b>. Example- MG,MDR,MJA [which means MG has the least and MJA has the most traffic around]";
+  var taskno=[1,2,3,4,5,6];
+  var startTime=[];
+  var endTime=[];
+  var timeDiff=[];
+  var x=[];
+  var y=[];
+  var z=[];
+  var b;
+  var i=-1;
+  var action=[0,0,0,0,0,0];
+  var drags=[0,0,0,0,0,0];
+  var infowindow;
+  var map4;
+  var service;
+  var text=["","","","","",""];
+</script>
+</head>
+
+<body>
+  <form id="pidztech">
+    Participant ID    : <input type="text" name="PID" value="p###">
+    Zooming Technique : <input type="text" name="ZoomingTech" value="Two Level">
+  </form>
+
+  <p id="task">Question 1: In Australia, there is a national park in the <b>Northern Territory</b> called <b>'Fish River George Block National Park'</b>. Mr. Bean is planning to go there in summer break. Which highway is the <b>closet</b> to the park? Mention the highway ID in the answer below. Search for the Park over the <b>whole area of Northern Territory</b> marked by dashed lines and Mention the <b>closest highway ID</b> in the answer below. Example- A16</p>
+  <!--<p>Click Start button to view the map. After you have submitted your answer, click Next to proceed to the next task.</p>-->
+  <button onclick="start()">Start Task</button>
+
+  <div id="mmap"></div>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDhM7OjW8DA3OYcpzyVtZLWqOhDoa2V2V8&libraries=places&callback=initMap">
+  </script>
+
+  <form id="ansform">
+    Your Answer: <input type="text" name="answer" value="demoanswer" size="50">
+  </form>
+
+  <button onclick="end()">Next</button>
+
+  <p id="print"></p>
+
+  <script>
+    function initMap() {
+      // this function initializes corresponding maps for each task (i)
+      var myLatlng = {lat: -25.363, lng: 131.044};
+      var myLatlng2 = {lat: 51.509865, lng: -0.118092};
+      var pyrmont = {lat: -33.867, lng: 151.195};
+      if (i==-1){
+        var map0 = new google.maps.Map(document.getElementById('mmap'), {
+          zoom: 0,
+          center: {lat: 0, lng: 0},
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+          });
+      }
+      if (i==0){
+        var map1 = new google.maps.Map(document.getElementById('mmap'), {
+          zoom: 4,
+          center: myLatlng,
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+          });
+
+        map1.addListener('dblclick', function(e) {
+        	 action[i]+=1;
+           if(action[i]%2==1){map1.setZoom(8);
+           map1.panTo(e.latLng)}
+           else{map1.setZoom(4);
+           map1.panTo(e.latLng)}
+        });
+
+        map1.addListener('dragend', function() {	 drags[i]+=1;  });
+      }
+
+      if (i==1){
+        var map2 = new google.maps.Map(document.getElementById('mmap'), {
+          zoom: 9,
+          center: myLatlng2,
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+        });
+        map2.addListener('dblclick', function(e) {
+        	 action[i]+=1;
+           if(action[i]%2==1){map2.setZoom(15);
+           map2.panTo(e.latLng)}
+           else{map2.setZoom(9);
+           map2.panTo(e.latLng)}
+        });
+
+        map2.addListener('dragend', function() {	 drags[i]+=1;  });
+
+        var marker = new google.maps.Marker({
+          position: {lat: 51.5433, lng: -0.0150},
+          map: map2,
+      	label:'C'
+        });
+          var marker1 = new google.maps.Marker({
+          position: {lat: 51.366502, lng: -0.066},
+          map: map2,
+      	label:'B'
+        });
+          var marker2 = new google.maps.Marker({
+          position: {lat: 51.438, lng: -0.4},
+          map: map2,
+      	label:'A'
+        });
+          var marker3 = new google.maps.Marker({
+          position: {lat: 51.56, lng: -0.35},
+          map: map2,
+          label:'D'
+        });
+      }
+      if (i==2){
+        var directionsDisplay = new google.maps.DirectionsRenderer();
+        var directionsService = new google.maps.DirectionsService();
+        var map3 = new google.maps.Map(document.getElementById('mmap'), {
+          zoom: 4,
+          center: {lat: 41.85, lng: -87.65},
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+        });
+        directionsDisplay.setMap(map3);
+
+        var start = "los angeles, ca"
+        var end = "chicago, il"
+        directionsService.route({
+          origin: start,
+          destination: end,
+          travelMode: 'DRIVING'
+        }, function(response, status) {
+          if (status === 'OK') {
+            directionsDisplay.setDirections(response);
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+        map3.addListener('dblclick', function(e) {
+        	 action[i]+=1;
+           if(action[i]%2==1){map3.setZoom(8);
+           map3.panTo(e.latLng)}
+           else{map3.setZoom(4);
+           map3.panTo(e.latLng)}
+        });
+
+        map3.addListener('dragend', function() {	 drags[i]+=1;  });
+
+      }
+      if (i==3){
+        map4 = new google.maps.Map(document.getElementById('mmap'), {
+          center: pyrmont,
+          zoom: 15,
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+        });
+
+        infowindow = new google.maps.InfoWindow();
+        service = new google.maps.places.PlacesService(map4);
+        service.nearbySearch({
+          location: pyrmont,
+          radius: 400,
+          type: ['bar']
+        }, callback);
+
+        map4.addListener('dblclick', function(e) {
+        	 action[i]+=1;
+           if(action[i]%2==1){map4.setZoom(18);
+           map4.panTo(e.latLng)}
+           else{map4.setZoom(15);
+           map4.panTo(e.latLng)}
+        });
+
+        map4.addListener('dragend', function() {	 drags[i]+=1;  });
+
+        }
+
+           function callback(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          for (var n = 0; n < results.length; n++) {
+            createMarker(results[n]);
+          }
+        }
+      }
+
+      function createMarker(place) {
+        var placeLoc = place.geometry.location;
+        var marker = new google.maps.Marker({
+          map: map4,
+          position: placeLoc
+        });
+
+        google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent(place.name);
+          infowindow.open(map4, this);
+        });
+      }
+      if (i==4){
+        var map5 = new google.maps.Map(document.getElementById('mmap'), {
+          zoom: 12,
+          center: {lat: 51.52, lng: -0.115871},
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+        });
+
+        var transitLayer = new google.maps.TransitLayer();
+        transitLayer.setMap(map5);
+
+          var marker1 = new google.maps.Marker({
+          position: {lat: 51.5066318, lng: -0.1651902},
+          map: map5
+        });
+          var marker2 = new google.maps.Marker({
+          position: {lat: 51.5364422, lng: -0.039941},
+          map: map5
+        });
+
+        map5.addListener('dblclick', function(e) {
+        	 action[i]+=1;
+           if(action[i]%2==1){map5.setZoom(15);
+           map5.panTo(e.latLng)}
+           else{map5.setZoom(12);
+           map5.panTo(e.latLng)}
+        });
+
+        map5.addListener('dragend', function() {	 drags[i]+=1;  });
+
+      }
+      if (i==5){
+        var map6 = new google.maps.Map(document.getElementById('mmap'), {
+          zoom: 14,
+          center: {lat:48.879, lng: 2.329},
+          scrollwheel: false,
+          disableDoubleClickZoom: true
+        });
+
+        var trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(map6);
+
+          var marker1 = new google.maps.Marker({
+          position: {lat: 48.8755346, lng: 2.3103199},
+          map: map6
+        });
+          var marker2 = new google.maps.Marker({
+          position: {lat: 48.8812061, lng: 2.333171},
+          map: map6
+        });
+          var marker3 = new google.maps.Marker({
+          position: {lat: 48.8718885, lng: 2.3420486},
+          map: map6
+        });
+
+        map6.addListener('dblclick', function(e) {
+        	 action[i]+=1;
+           if(action[i]%2==1){map6.setZoom(17);
+           map6.panTo(e.latLng)}
+           else{map6.setZoom(14);
+           map6.panTo(e.latLng)}
+        });
+
+        map6.addListener('dragend', function() {	 drags[i]+=1;  });
+
+      }
+    }
+
+    function start(){
+      // when user clicks start, start the timer and show the map
+      i=i+1;
+      startTime[i] = new Date();
+      document.getElementById("mmap").style.display="block";
+      initMap();
+    }
+
+    function end() {
+      // when user clicks end, calculate completion time, save the other related info and proceed to the next task or finish the study
+      endTime[i] = new Date();
+      timeDiff[i] = endTime[i] - startTime[i]; //in ms
+
+      x[i] = document.getElementById("pidztech");
+      y[i] = document.getElementById("ansform").elements.namedItem("answer").value;
+      text[i] += "Part.ID: " + x[i].elements.namedItem("PID").value + "<br>"
+      text[i] += "Z Tech: " + x[i].elements.namedItem("ZoomingTech").value + "<br>"
+      text[i] += "Task No.: " + taskno[i] + "<br>"
+      text[i] += "Task: " + tasks[i] + "<br>"
+      text[i] += "Answer:" + y[i]+ "<br>";
+      text[i] += "Time taken: "+ timeDiff[i] + "ms"+ "<br>";
+    	text[i] += "# of Zoom Actions: "+ action[i]+ "<br>";
+    	text[i] += "# of Drags: "+ drags[i];
+       // printval(i);
+    	if(i<5){
+        // not the last task, go to the next task
+    	  document.getElementById("mmap").style.display="none";
+        document.getElementById("task").innerHTML = tasks[i+1];
+    	}
+    	else{
+        // study tasks completed, save the data in an excel file and close
+    	  doit();
+    	}
+    }
+
+    function printval(b){
+      // display the latest task related statistics(not for the users, for debugging)
+      if (b==0){ document.getElementById("print").innerHTML = text[b];}
+      else if (b==1) { document.getElementById("print").innerHTML = text[b];}
+      else if (b==2){ document.getElementById("print").innerHTML = text[b];}
+      else if (b==3) { document.getElementById("print").innerHTML = text[b];}
+      else if (b==4){ document.getElementById("print").innerHTML = text[b];}
+      else { document.getElementById("print").innerHTML = text[b];}
+    }
+
+  </script>
+</body>
+</html>
